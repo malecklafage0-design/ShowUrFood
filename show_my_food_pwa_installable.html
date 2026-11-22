@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Show My Food — Le Battle Culinaire Local</title>
+
+  <!-- PWA & Mobile Meta Tags -->
+  <meta name="application-name" content="Show My Food" />
+  <meta name="apple-mobile-web-app-title" content="Show My Food" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f1115" />
+  <meta name="description" content="Vote pour les meilleurs plats autour de toi, grimpe dans le Top Tiers du jour et débloque des récompenses locales." />
+
+  <!-- Dynamic Manifest & Icons injected via JS -->
+  <link id="pwa-manifest" rel="manifest" href="" />
+  <link id="apple-touch-icon" rel="apple-touch-icon" href="" />
+  <link id="favicon-link" rel="icon" type="image/png" href="" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            darkbg: '#0f1115',
+            darkcard: '#171a21',
+            darkborder: '#252a34',
+            brand: {
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      box-sizing: border-box;
+    }
+    input, textarea, select {
+      user-select: text;
+    }
+    html, body {
+      font-family: 'Inter', sans-serif;
+      background-color: #08090c;
+      color: #f8fafc;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      height: 100%;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .card-spring {
+      transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease;
+    }
+    .card-dragging {
+      transition: none !important;
+      cursor: grabbing !important;
+    }
+    @keyframes pulsePop {
+      0% { transform: scale(0.92); opacity: 0; }
+      60% { transform: scale(1.04); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop {
+      animation: pulsePop 0.28s ease-out forwards;
+    }
+    @keyframes scanBeam {
+      0% { top: 4%; opacity: 0.2; }
+      50% { top: 88%; opacity: 1; }
+      100% { top: 4%; opacity: 0.2; }
+    }
+    .scan-line {
+      animation: scanBeam 1.3s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-[#07080b] sm:py-3">
+
+  <!-- Mobile-First PWA App Shell -->
+  <div id="app-shell" class="relative w-full h-[100dvh] sm:h-[852px] sm:max-w-[424px] bg-[#0f1115] sm:rounded-[38px] sm:shadow-[0_25px_80px_-15px_rgba(249,115,22,0.22)] sm:border-[6px] sm:border-[#1f2430] flex flex-col overflow-hidden text-slate-100">
+
+    <!-- Smart Install Banner (dismissible) -->
+    <div id="install-banner" class="bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 text-white px-3.5 py-2 flex items-center justify-between gap-2 z-40 shrink-0 shadow-md">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="text-base shrink-0">📲</span>
+        <div class="min-w-0">
+          <p class="text-[11px] font-black leading-tight truncate">Installe Show My Food sur ton écran</p>
+          <p class="text-[10px] text-orange-100 truncate">Accès plein écran & hors-ligne • 0 Mo sur store</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button id="banner-install-btn" class="bg-slate-950 hover:bg-slate-900 text-white text-[11px] font-extrabold px-2.5 py-1 rounded-full shadow-xs active:scale-95 transition">
+          Installer
+        </button>
+        <button id="close-banner-btn" aria-label="Fermer" class="text-white/80 hover:text-white text-xs font-bold px-1.5 py-1">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <!-- Top Header -->
+    <header class="bg-[#0f1115]/95 backdrop-blur-md border-b border-[#252a34] px-4 pt-3 pb-2.5 z-30 shrink-0">
+      <div class="flex items-center justify-between gap-2">
+        <!-- Brand Logo -->
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-orange-500 via-amber-500 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/30 shrink-0">
+            <!-- Inline SVG Flame Burger Emblem -->
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2c.5 2.5 2 3.8 2 6a2 2 0 1 1-4 0c0-1.1.4-2.1 1-3-1.8.8-3 2.7-3 4.8A4 4 0 0 0 12 14a4 4 0 0 0 4-4.2C16 6.8 14.3 4 12 2Z" fill="currentColor"/>
+              <path d="M4 16h16" />
+              <path d="M5 19.5h14a1 1 0 0 0 1-1v-.5H4v.5a1 1 0 0 0 1 1Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <h1 class="font-black text-[16px] tracking-tight text-white leading-none truncate">Show My Food</h1>
+            <div class="flex items-center gap-1.5 mt-1">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="service-slot-label" class="text-[10px] font-bold text-orange-400 truncate">Battle du Soir • En direct</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Points Counter + Install Trigger -->
+        <div class="flex items-center gap-1.5 shrink-0">
+          <div class="bg-[#171a21] border border-[#2b313e] px-2.5 py-1.5 rounded-full flex items-center gap-1 shadow-xs" title="Tes points Foodies">
+            <span class="text-xs">🔥</span>
+            <span id="user-points" class="text-xs font-black text-amber-400">140</span>
+          </div>
+          <button id="header-install-btn" class="bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/40 text-orange-400 text-[11px] font-extrabold px-2.5 py-1.5 rounded-full flex items-center gap-1 active:scale-95 transition" title="Installer l'application">
+            <span>📲</span>
+            <span>Installer</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Zone Selector Bar -->
+      <div class="mt-2.5 flex items-center gap-2">
+        <div class="relative flex-1">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs">📍</span>
+          <select id="zone-selector" class="w-full appearance-none bg-[#171a21] hover:bg-[#1e222b] border border-[#282e3a] text-slate-100 text-xs font-bold rounded-xl pl-8 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 transition cursor-pointer">
+            <option value="ALL">Tout autour de moi (France)</option>
+            <option value="Paris 11e • Bastille" selected>Paris 11e • Bastille</option>
+            <option value="Lyon • Presqu'île">Lyon • Presqu'île</option>
+            <option value="Marseille • Vieux-Port">Marseille • Vieux-Port</option>
+            <option value="Bordeaux • Centre">Bordeaux • Centre</option>
+          </select>
+          <span class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">▼</span>
+        </div>
+        <button id="toggle-slot-btn" class="shrink-0 bg-[#171a21] border border-[#282e3a] hover:border-orange-500/50 text-slate-300 text-[11px] font-bold px-2.5 py-2 rounded-xl active:scale-95 transition" title="Changer de créneau">
+          🕒 Créneau
+        </button>
+      </div>
+    </header>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="pointer-events-none fixed sm:absolute top-32 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[360px] flex flex-col items-center gap-2"></div>
+
+    <!-- MAIN SCROLLABLE AREA -->
+    <main class="flex-1 overflow-y-auto overflow-x-hidden relative">
+
+      <!-- ==================== TAB 1: DECK SWIPE (VOTER) ==================== -->
+      <section id="tab-swipe" class="h-full flex flex-col px-4 pt-3 pb-3">
+        <!-- Category Filter Pills -->
+        <div class="flex items-center justify-between gap-1.5 mb-2.5 shrink-0">
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            <button data-swipe-cat="ALL" class="swipe-cat-btn active px-3 py-1 rounded-full text-xs font-extrabold bg-orange-500 text-white shadow-xs transition">Tout</button>
+            <button data-swipe-cat="Fait maison" class="swipe-cat-btn px-3 py-1 rounded-full text-xs font-bold bg-[#171a21] text-slate-300 border border-[#282e3a] hover:border-orange-500/40 transition">🏠 Fait maison</button>
+            <button data-swipe-cat="Restaurant" class="swipe-cat-btn px-3 py-1 rounded-full text-xs font-bold bg-[#171a21] text-slate-300 border border-[#282e3a] hover:border-orange-500/40 transition">🍽️ Resto</button>
+            <button data-swipe-cat="Concept" class="swipe-cat-btn px-3 py-1 rounded-full text-xs font-bold bg-[#171a21] text-slate-300 border border-[#282e3a] hover:border-orange-500/40 transition">✨ Concept</button>
+          </div>
+          <span id="deck-counter" class="text-[11px] font-bold text-slate-400 shrink-0">0 plat</span>
+        </div>
+
+        <!-- Card Stack Wrapper -->
+        <div id="card-stack-wrapper" class="relative flex-1 w-full min-h-[350px] flex items-center justify-center">
+          <!-- Cards rendered dynamically -->
+        </div>
+
+        <!-- Bottom Action Buttons -->
+        <div id="swipe-controls" class="pt-3 pb-1 flex items-center justify-center gap-5 shrink-0">
+          <button id="btn-pass" aria-label="Passer" class="w-14 h-14 rounded-full bg-[#171a21] border-2 border-rose-500/40 text-rose-400 shadow-lg shadow-black/40 flex items-center justify-center text-2xl hover:bg-rose-500/15 active:scale-90 transition">
+            ✕
+          </button>
+          <button id="btn-super" aria-label="Super-Chef +3 pts" class="w-13 h-13 px-3.5 py-2 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 text-white shadow-lg shadow-orange-500/30 flex flex-col items-center justify-center hover:brightness-110 active:scale-90 transition" title="Super-Chef (+3 pts)">
+            <span class="text-lg leading-none">⭐</span>
+            <span class="text-[9px] font-black leading-none mt-0.5">+3 pts</span>
+          </button>
+          <button id="btn-like" aria-label="MIAM +1 pt" class="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 flex items-center justify-center text-2xl hover:brightness-110 active:scale-90 transition" title="MIAM (+1 pt)">
+            🔥
+          </button>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 2: TOP TIERS (CLASSEMENT) ==================== -->
+      <section id="tab-leaderboard" class="hidden px-4 pt-3 pb-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-black text-white">Top Tiers du Jour 🏆</h2>
+            <p id="leaderboard-subtitle" class="text-xs text-slate-400 font-medium">Classement en direct • Paris 11e • Bastille</p>
+          </div>
+          <span class="text-[11px] font-extrabold bg-orange-500/15 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full">Fin 23h59</span>
+        </div>
+
+        <!-- Category Filter Pills -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <button data-lb-cat="ALL" class="lb-cat-btn px-3 py-1.5 rounded-full text-xs font-extrabold bg-orange-500 text-white shadow-xs transition">Tout le Top</button>
+          <button data-lb-cat="Fait maison" class="lb-cat-btn px-3 py-1.5 rounded-full text-xs font-bold bg-[#171a21] text-slate-300 border border-[#282e3a] transition">🏠 Fait maison</button>
+          <button data-lb-cat="Restaurant" class="lb-cat-btn px-3 py-1.5 rounded-full text-xs font-bold bg-[#171a21] text-slate-300 border border-[#282e3a] transition">🍽️ Restaurant</button>
+          <button data-lb-cat="Concept" class="lb-cat-btn px-3 py-1.5 rounded-full text-xs font-bold bg-[#171a21] text-slate-300 border border-[#282e3a] transition">✨ Concept</button>
+        </div>
+
+        <!-- Visual Podium Top 3 -->
+        <div id="podium-container" class="bg-gradient-to-b from-[#1e1b18] via-[#171a21] to-[#171a21] border border-orange-500/30 rounded-3xl p-3.5 shadow-lg">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Ranks 4+ -->
+        <div>
+          <h3 class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-2 px-1">Suite du classement</h3>
+          <div id="ranking-list" class="space-y-2.5">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 3: POSTER MON PLAT (+ POSTER) ==================== -->
+      <section id="tab-post" class="hidden px-4 pt-3 pb-6 space-y-4">
+        <div>
+          <h2 class="text-lg font-black text-white">Montre ton assiette 📸</h2>
+          <p class="text-xs text-slate-400 font-medium">L'IA analyse ton plat et le propulse en tête du deck et du classement.</p>
+        </div>
+
+        <!-- Photo Capture / Preview Box -->
+        <div class="bg-[#171a21] border-2 border-dashed border-[#2e3545] rounded-3xl p-3.5 text-center relative overflow-hidden">
+          <div id="post-preview-empty" class="py-4 flex flex-col items-center">
+            <div class="w-12 h-12 rounded-2xl bg-orange-500/15 border border-orange-500/30 text-orange-400 flex items-center justify-center text-2xl mb-2">
+              🍽️
+            </div>
+            <p class="text-sm font-bold text-slate-100">Prends ou importe la photo de ton plat</p>
+            <p class="text-[11px] text-slate-400 mt-0.5 mb-3">Caméra directe ou galerie photo</p>
+            <label class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl cursor-pointer active:scale-95 transition shadow-md shadow-orange-500/20">
+              <span>📷 Choisir / Prendre une photo</span>
+              <input id="photo-input" type="file" accept="image/*" class="hidden" />
+            </label>
+          </div>
+
+          <div id="post-preview-filled" class="hidden relative rounded-2xl overflow-hidden">
+            <img id="post-preview-img" src="" alt="Aperçu du plat" class="w-full h-52 object-cover rounded-2xl" />
+            <!-- AI Scan Laser Overlay (shown during scan) -->
+            <div id="ai-scan-overlay" class="hidden absolute inset-0 bg-indigo-950/50 backdrop-blur-[1px]">
+              <div class="scan-line absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee]"></div>
+              <div class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-950/90 border border-cyan-400/50 text-cyan-300 text-[11px] font-extrabold px-3 py-1 rounded-full whitespace-nowrap">
+                🤖 Scan nutritionnel & catégorie IA...
+              </div>
+            </div>
+            <button id="clear-photo-btn" type="button" class="absolute top-2.5 right-2.5 bg-slate-950/80 text-white text-xs font-bold px-2.5 py-1 rounded-full border border-white/15 hover:bg-slate-900">
+              Changer
+            </button>
+          </div>
+
+          <!-- 3 Realistic Sample Dishes for 1-Click Testing -->
+          <div class="mt-3 pt-3 border-t border-[#252a34]">
+            <p class="text-[11px] font-bold text-slate-400 mb-2">Ou teste en 1 clic avec un plat d'exemple :</p>
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" class="sample-dish-btn group relative rounded-xl overflow-hidden border border-[#2b313e] hover:border-orange-500 bg-[#0f1115] transition"
+                data-url="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80"
+                data-title="Double Smash Burger Cheddar Affiné"
+                data-cat="Restaurant"
+                data-resto="Smash & Co Bastille"
+                data-desc="Pain brioché toasté, double steak smashé croustillant, cheddar affiné 12 mois et sauce secrète."
+                data-kcal="840" data-p="46" data-g="58" data-l="45">
+                <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=70" alt="Burger" class="w-full h-14 object-cover group-hover:scale-105 transition" />
+                <span class="block text-[10px] font-bold py-1 text-slate-200 truncate px-1">Smash Burger</span>
+              </button>
+
+              <button type="button" class="sample-dish-btn group relative rounded-xl overflow-hidden border border-[#2b313e] hover:border-orange-500 bg-[#0f1115] transition"
+                data-url="https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=80"
+                data-title="Ramen Tonkotsu Œuf Mariné Maison"
+                data-cat="Fait maison"
+                data-resto=""
+                data-desc="Bouillon mijoté 8h, nouilles fraîches, œuf mollet mariné au soja et ciboule croquante."
+                data-kcal="620" data-p="34" data-g="68" data-l="21">
+                <img src="https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=300&q=70" alt="Ramen" class="w-full h-14 object-cover group-hover:scale-105 transition" />
+                <span class="block text-[10px] font-bold py-1 text-slate-200 truncate px-1">Ramen Maison</span>
+              </button>
+
+              <button type="button" class="sample-dish-btn group relative rounded-xl overflow-hidden border border-[#2b313e] hover:border-orange-500 bg-[#0f1115] transition"
+                data-url="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=800&q=80"
+                data-title="Donut Pistache Craquant & Or"
+                data-cat="Concept"
+                data-resto="Atelier Sucré"
+                data-desc="Brioche filante glacée à la pâte de pistache torréfiée, éclats de praliné et feuille d'or."
+                data-kcal="490" data-p="9" data-g="56" data-l="25">
+                <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=300&q=70" alt="Donut" class="w-full h-14 object-cover group-hover:scale-105 transition" />
+                <span class="block text-[10px] font-bold py-1 text-slate-200 truncate px-1">Donut Concept</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Analyze Trigger Button -->
+        <button id="ai-analyze-btn" type="button" class="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white font-extrabold text-xs shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition">
+          <span id="ai-btn-icon">✨</span>
+          <span id="ai-btn-text">Analyser mon plat avec l'IA (Titre + Macros)</span>
+        </button>
+
+        <!-- AI Nutrition & Macros Box -->
+        <div id="ai-nutrition-box" class="hidden bg-indigo-950/40 border border-indigo-500/35 rounded-2xl p-3 space-y-2 animate-pop">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-extrabold text-indigo-300">✨ Estimation Nutritionnelle IA</span>
+            <span id="ai-kcal-badge" class="text-xs font-black bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">650 kcal</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-[#0f1115] rounded-xl py-1.5 px-2 border border-indigo-500/20">
+              <div class="text-[10px] font-semibold text-slate-400">Protéines</div>
+              <div id="ai-prot" class="text-xs font-black text-white">32g</div>
+            </div>
+            <div class="bg-[#0f1115] rounded-xl py-1.5 px-2 border border-indigo-500/20">
+              <div class="text-[10px] font-semibold text-slate-400">Glucides</div>
+              <div id="ai-carbs" class="text-xs font-black text-white">54g</div>
+            </div>
+            <div class="bg-[#0f1115] rounded-xl py-1.5 px-2 border border-indigo-500/20">
+              <div class="text-[10px] font-semibold text-slate-400">Lipides</div>
+              <div id="ai-fats" class="text-xs font-black text-white">24g</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dish Submission Form -->
+        <form id="publish-dish-form" class="space-y-3 bg-[#171a21] p-4 rounded-3xl border border-[#252a34]">
+          <div>
+            <label class="block text-[11px] font-extrabold text-slate-300 mb-1">Nom du plat *</label>
+            <input id="dish-title" type="text" required placeholder="Ex. Pâtes fraîches à la truffe noire" class="w-full bg-[#0f1115] border border-[#282e3a] text-white rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-extrabold text-slate-300 mb-1">Catégorie *</label>
+              <select id="dish-category" class="w-full bg-[#0f1115] border border-[#282e3a] text-white rounded-xl px-2.5 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <option value="Fait maison">🏠 Fait maison</option>
+                <option value="Restaurant">🍽️ Restaurant</option>
+                <option value="Concept">✨ Concept</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-extrabold text-slate-300 mb-1">Zone du battle *</label>
+              <select id="dish-zone" class="w-full bg-[#0f1115] border border-[#282e3a] text-white rounded-xl px-2.5 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <option value="Paris 11e • Bastille">Paris 11e • Bastille</option>
+                <option value="Lyon • Presqu'île">Lyon • Presqu'île</option>
+                <option value="Marseille • Vieux-Port">Marseille • Vieux-Port</option>
+                <option value="Bordeaux • Centre">Bordeaux • Centre</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="resto-name-wrapper" class="hidden">
+            <label class="block text-[11px] font-extrabold text-slate-300 mb-1">Nom du restaurant / enseigne</label>
+            <input id="dish-resto" type="text" placeholder="Ex. Ramen Bar Bastille, Smash & Co..." class="w-full bg-[#0f1115] border border-[#282e3a] text-white rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-extrabold text-slate-300 mb-1">Petite description</label>
+            <textarea id="dish-desc" rows="2" placeholder="Ingrédients clés, secret de cuisson ou ambiance..." class="w-full bg-[#0f1115] border border-[#282e3a] text-white rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
+          </div>
+
+          <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black text-sm shadow-lg shadow-orange-500/25 hover:brightness-105 active:scale-[0.98] transition">
+            🚀 Publier dans le Battle (+25 pts)
+          </button>
+        </form>
+      </section>
+
+      <!-- ==================== TAB 4: GAINS, RÉCOMPENSES & DÉPLOIEMENT ==================== -->
+      <section id="tab-rewards" class="hidden px-4 pt-3 pb-6 space-y-4">
+        <!-- Foodie Wallet Hero -->
+        <div class="bg-gradient-to-br from-[#1d222d] via-[#171a21] to-orange-950/60 border border-orange-500/30 rounded-3xl p-4 shadow-lg relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-[11px] uppercase tracking-wider font-extrabold text-orange-400">Ton solde Foodie</span>
+              <div class="flex items-baseline gap-1.5 mt-0.5">
+                <span id="rewards-points-big" class="text-3xl font-black text-white">140</span>
+                <span class="text-xs font-bold text-amber-400">pts</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="inline-block bg-orange-500/15 border border-orange-500/30 px-2.5 py-1 rounded-full text-[11px] font-bold text-amber-300">
+                🔥 Série : 3 jours
+              </span>
+              <p class="text-[10px] text-slate-400 mt-1">MIAM +1 pt • Super +3 • Post +25</p>
+            </div>
+          </div>
+          <div class="mt-3.5">
+            <div class="flex justify-between text-[11px] font-semibold text-slate-300 mb-1">
+              <span>Prochain palier : Café + Cookie</span>
+              <span id="points-progress-label">140 / 200 pts</span>
+            </div>
+            <div class="w-full h-2 bg-black/40 rounded-full overflow-hidden">
+              <div id="points-progress-bar" class="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-300" style="width: 70%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Partner Local Rewards Shop -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-black text-white">Boutique Partenaires Locaux 🎁</h3>
+            <span id="rewards-zone-tag" class="text-[11px] font-bold text-orange-400">Paris 11e • Bastille</span>
+          </div>
+
+          <div id="rewards-shop-list" class="space-y-2.5">
+            <!-- Rendered dynamically with persistence -->
+          </div>
+        </div>
+
+        <!-- Quick Free Hosting & PWA Deployment Guide -->
+        <div class="bg-[#171a21] border border-[#282e3a] rounded-3xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-black text-white flex items-center gap-1.5">
+              <span>🚀</span>
+              <span>Héberger & partager ton app gratuitement</span>
+            </h3>
+            <span class="text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-full">0 €</span>
+          </div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Pour que n'importe qui puisse ouvrir et installer <strong class="text-slate-200">Show My Food</strong> via un lien HTTPS sur iPhone ou Android :
+          </p>
+          <ol class="text-[11px] text-slate-300 space-y-1.5 list-decimal list-inside">
+            <li>Télécharge le fichier <code class="bg-black/50 text-orange-300 px-1.5 py-0.5 rounded">index.html</code> via le bouton ci-dessous.</li>
+            <li>Glisse-le sur <strong class="text-white">Netlify Drop</strong> (<span class="text-orange-400">app.netlify.com/drop</span>) ou dépose-le sur <strong class="text-white">GitHub Pages</strong>.</li>
+            <li>Envoie le lien généré à tes testeurs : ils cliquent sur <strong class="text-white">« Installer »</strong> !</li>
+          </ol>
+          <div class="pt-1 flex gap-2">
+            <button id="download-html-btn" type="button" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-extrabold py-2.5 px-3 rounded-xl transition active:scale-95">
+              ⬇️ Télécharger index.html
+            </button>
+            <button id="open-install-modal-secondary" type="button" class="bg-[#0f1115] border border-[#2b313e] hover:border-orange-500/50 text-slate-200 text-xs font-bold py-2.5 px-3 rounded-xl transition active:scale-95">
+              📲 Aide install
+            </button>
+          </div>
+        </div>
+
+        <!-- Discreet Demo Reset Button -->
+        <div class="pt-2 text-center">
+          <button id="reset-demo-btn" type="button" class="text-[11px] font-semibold text-slate-500 hover:text-rose-400 underline underline-offset-4 transition">
+            Réinitialiser la démo (remettre scores & votes à zéro)
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bg-[#13161d] border-t border-[#252a34] px-2 py-1.5 grid grid-cols-4 gap-1 z-30 shrink-0">
+      <button data-tab="swipe" class="nav-btn active flex flex-col items-center justify-center py-1.5 rounded-2xl text-orange-400 bg-orange-500/15 font-extrabold transition">
+        <span class="text-lg leading-none">🔥</span>
+        <span class="text-[10px] mt-1">Voter</span>
+      </button>
+      <button data-tab="leaderboard" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-2xl text-slate-400 hover:text-white font-bold transition">
+        <span class="text-lg leading-none">🏆</span>
+        <span class="text-[10px] mt-1">Top Tiers</span>
+      </button>
+      <button data-tab="post" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-2xl text-slate-400 hover:text-white font-bold transition">
+        <span class="text-lg leading-none">➕</span>
+        <span class="text-[10px] mt-1">Poster</span>
+      </button>
+      <button data-tab="rewards" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-2xl text-slate-400 hover:text-white font-bold transition">
+        <span class="text-lg leading-none">🎁</span>
+        <span class="text-[10px] mt-1">Gains</span>
+      </button>
+    </nav>
+
+    <!-- ==================== PWA INSTALL MODAL ==================== -->
+    <div id="install-modal" class="hidden fixed sm:absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+      <div class="w-full max-w-[380px] bg-[#171a21] border border-[#2c3342] rounded-3xl p-5 space-y-4 shadow-2xl animate-pop">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <img id="modal-app-icon" src="" alt="Icône Show My Food" class="w-12 h-12 rounded-2xl shadow-md border border-orange-500/40" />
+            <div>
+              <h3 class="text-base font-black text-white">Installer Show My Food</h3>
+              <p class="text-[11px] text-slate-400">Application Web Progressive (PWA)</p>
+            </div>
+          </div>
+          <button id="close-install-modal" class="w-8 h-8 rounded-full bg-[#0f1115] text-slate-400 hover:text-white flex items-center justify-center text-sm font-bold">✕</button>
+        </div>
+
+        <!-- Native Prompt Button (visible if browser fires beforeinstallprompt) -->
+        <div id="native-install-box" class="hidden">
+          <button id="trigger-native-install" class="w-full py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black text-xs shadow-lg shadow-orange-500/30 active:scale-95 transition">
+            ⚡ Installer maintenant en 1 clic
+          </button>
+        </div>
+
+        <!-- Step-by-step iOS & Android Instructions -->
+        <div class="space-y-2.5 text-xs">
+          <div class="bg-[#0f1115] border border-[#252a34] rounded-2xl p-3">
+            <div class="font-extrabold text-white flex items-center gap-1.5 mb-1">
+              <span>🍎</span>
+              <span>Sur iPhone / iPad (Safari)</span>
+            </div>
+            <p class="text-[11px] text-slate-300 leading-relaxed">
+              1. Appuie sur le bouton <strong class="text-orange-400">Partager ⬆️</strong> en bas de Safari.<br/>
+              2. Fais défiler et choisis <strong class="text-white">« Sur l'écran d'accueil ➕ »</strong> puis <strong class="text-white">Ajouter</strong>.
+            </p>
+          </div>
+
+          <div class="bg-[#0f1115] border border-[#252a34] rounded-2xl p-3">
+            <div class="font-extrabold text-white flex items-center gap-1.5 mb-1">
+              <span>🤖</span>
+              <span>Sur Android (Chrome)</span>
+            </div>
+            <p class="text-[11px] text-slate-300 leading-relaxed">
+              1. Appuie sur le menu <strong class="text-orange-400">⋮</strong> en haut à droite.<br/>
+              2. Sélectionne <strong class="text-white">« Installer l'application »</strong> ou <strong class="text-white">« Ajouter à l'écran d'accueil »</strong>.
+            </p>
+          </div>
+        </div>
+
+        <!-- Download standalone HTML file button -->
+        <div class="pt-1 border-t border-[#252a34] flex flex-col gap-2">
+          <button id="modal-download-html" class="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 transition active:scale-95">
+            <span>⬇️ Télécharger le fichier index.html</span>
+          </button>
+          <p class="text-[10px] text-center text-slate-500">
+            Sauvegarde ce fichier autonome pour l'héberger sur Netlify Drop ou GitHub Pages.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ==================== 1. PWA ICON, MANIFEST & SERVICE WORKER ====================
+    function generateAppIconDataURL(size) {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+
+      // Dark background with rounded corners
+      const radius = size * 0.22;
+      ctx.beginPath();
+      ctx.moveTo(radius, 0);
+      ctx.lineTo(size - radius, 0);
+      ctx.quadraticCurveTo(size, 0, size, radius);
+      ctx.lineTo(size, size - radius);
+      ctx.quadraticCurveTo(size, size, size - radius, size);
+      ctx.lineTo(radius, size);
+      ctx.quadraticCurveTo(0, size, 0, size - radius);
+      ctx.lineTo(0, radius);
+      ctx.quadraticCurveTo(0, 0, radius, 0);
+      ctx.closePath();
+
+      const bgGrad = ctx.createLinearGradient(0, 0, size, size);
+      bgGrad.addColorStop(0, "#181b24");
+      bgGrad.addColorStop(1, "#0f1115");
+      ctx.fillStyle = bgGrad;
+      ctx.fill();
+
+      // Subtle glowing orange border ring
+      ctx.lineWidth = size * 0.035;
+      const ringGrad = ctx.createLinearGradient(0, 0, size, size);
+      ringGrad.addColorStop(0, "#f97316");
+      ringGrad.addColorStop(1, "#f59e0b");
+      ctx.strokeStyle = ringGrad;
+      ctx.stroke();
+
+      // Center radial glow
+      const glow = ctx.createRadialGradient(size * 0.5, size * 0.48, size * 0.05, size * 0.5, size * 0.5, size * 0.42);
+      glow.addColorStop(0, "rgba(249, 115, 22, 0.38)");
+      glow.addColorStop(1, "rgba(249, 115, 22, 0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, size, size);
+
+      // Stylized Flame + Burger Dome
+      ctx.save();
+      ctx.translate(size * 0.5, size * 0.52);
+
+      // Flame top
+      const flameGrad = ctx.createLinearGradient(0, -size * 0.34, 0, size * 0.06);
+      flameGrad.addColorStop(0, "#fde047");
+      flameGrad.addColorStop(0.5, "#f97316");
+      flameGrad.addColorStop(1, "#e11d48");
+      ctx.fillStyle = flameGrad;
+
+      ctx.beginPath();
+      ctx.moveTo(0, -size * 0.33);
+      ctx.bezierCurveTo(size * 0.19, -size * 0.16, size * 0.21, size * 0.02, 0, size * 0.07);
+      ctx.bezierCurveTo(-size * 0.21, size * 0.02, -size * 0.19, -size * 0.16, 0, -size * 0.33);
+      ctx.fill();
+
+      // Inner star sparkle
+      ctx.fillStyle = "#fffbeb";
+      ctx.beginPath();
+      ctx.arc(0, -size * 0.09, size * 0.042, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Burger Patty & Bottom Bun bars
+      ctx.fillStyle = "#fb923c";
+      ctx.beginPath();
+      ctx.roundRect(-size * 0.24, size * 0.11, size * 0.48, size * 0.055, size * 0.028);
+      ctx.fill();
+
+      ctx.fillStyle = "#f8fafc";
+      ctx.beginPath();
+      ctx.roundRect(-size * 0.21, size * 0.195, size * 0.42, size * 0.065, size * 0.032);
+      ctx.fill();
+
+      ctx.restore();
+      return canvas.toDataURL("image/png");
+    }
+
+    function initPWA() {
+      try {
+        const icon192 = generateAppIconDataURL(192);
+        const icon512 = generateAppIconDataURL(512);
+
+        document.getElementById("apple-touch-icon").href = icon192;
+        document.getElementById("favicon-link").href = icon192;
+        const modalIcon = document.getElementById("modal-app-icon");
+        if (modalIcon) modalIcon.src = icon192;
+
+        const manifestObj = {
+          name: "Show My Food",
+          short_name: "ShowMyFood",
+          description: "Le battle culinaire local : vote pour les meilleurs plats autour de toi et gagne des récompenses.",
+          start_url: "./",
+          display: "standalone",
+          orientation: "portrait",
+          theme_color: "#0f1115",
+          background_color: "#0f1115",
+          icons: [
+            { src: icon192, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+            { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+          ]
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: "application/manifest+json" });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        document.getElementById("pwa-manifest").href = manifestURL;
+
+        // Register Offline Service Worker via Blob URL (with graceful fallback in sandboxed/file contexts)
+        if ("serviceWorker" in navigator && (window.location.protocol === "https:" || window.location.hostname === "localhost")) {
+          const swCode = `
+            const CACHE_NAME = 'show-my-food-v1';
+            self.addEventListener('install', (event) => {
+              self.skipWaiting();
+            });
+            self.addEventListener('activate', (event) => {
+              event.waitUntil(self.clients.claim());
+            });
+            self.addEventListener('fetch', (event) => {
+              event.respondWith(
+                caches.match(event.request).then((cached) => {
+                  return cached || fetch(event.request).then((response) => {
+                    if (event.request.method === 'GET' && response.status === 200) {
+                      const copy = response.clone();
+                      caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+                    }
+                    return response;
+                  }).catch(() => cached);
+                })
+              );
+            });
+          `;
+          const swBlob = new Blob([swCode], { type: "application/javascript" });
+          const swUrl = URL.createObjectURL(swBlob);
+          navigator.serviceWorker.register(swUrl).catch(() => {});
+        }
+      } catch (e) {
+        // Graceful fallback in restricted iframes
+      }
+    }
+
+    // Capture native install prompt if available
+    let deferredInstallPrompt = null;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const nativeBox = document.getElementById("native-install-box");
+      if (nativeBox) nativeBox.classList.remove("hidden");
+    });
+
+    // ==================== 2. STATE & LOCALSTORAGE PERSISTENCE ====================
+    const STORAGE_KEY = "show_my_food_pwa_state_v1";
+
+    const DEFAULT_DISHES = [
+      {
+        id: "d1",
+        title: "Ramen Tonkotsu Chashu & Œuf Mollet",
+        author: "@kenji_food",
+        zone: "Paris 11e • Bastille",
+        distance: "250m",
+        postedAgo: "Il y a 12 min",
+        category: "Restaurant",
+        restaurantName: "Ramen Bar Bastille",
+        description: "Bouillon porc mijoté 10h, poitrine caramélisée au chalumeau et œuf mariné.",
+        image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=900&q=80",
+        score: 1284,
+        likes: 48,
+        passes: 4,
+        kcal: 690,
+        protein: 38,
+        carbs: 72,
+        fat: 26,
+        isUserPost: false
+      },
+      {
+        id: "d2",
+        title: "Tagliatelles Fraîches Crème de Truffe",
+        author: "@claire_cook",
+        zone: "Paris 11e • Bastille",
+        distance: "400m",
+        postedAgo: "Il y a 24 min",
+        category: "Fait maison",
+        restaurantName: "",
+        description: "Pâtes pétries à la main ce matin, parmesan 24 mois et copeaux de truffe noire.",
+        image: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=900&q=80",
+        score: 1265,
+        likes: 42,
+        passes: 5,
+        kcal: 640,
+        protein: 24,
+        carbs: 74,
+        fat: 27,
+        isUserPost: false
+      },
+      {
+        id: "d3",
+        title: "Croissant-Burger Effiloché & Pickles",
+        author: "@theo_street",
+        zone: "Paris 11e • Bastille",
+        distance: "650m",
+        postedAgo: "Il y a 38 min",
+        category: "Concept",
+        restaurantName: "Le Labo Brioché",
+        description: "Alliance croustillante entre un croissant pur beurre et un effiloché de bœuf fumé 6h.",
+        image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=80",
+        score: 1242,
+        likes: 37,
+        passes: 7,
+        kcal: 810,
+        protein: 41,
+        carbs: 55,
+        fat: 46,
+        isUserPost: false
+      },
+      {
+        id: "d4",
+        title: "Poke Bowl Saumon Mariné & Mangue",
+        author: "@ines_healthy",
+        zone: "Paris 11e • Bastille",
+        distance: "500m",
+        postedAgo: "Il y a 51 min",
+        category: "Fait maison",
+        restaurantName: "",
+        description: "Riz vinaigré tiède, pavé de saumon frais mariné sésame-gingembre, avocat et edamame.",
+        image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=80",
+        score: 1218,
+        likes: 31,
+        passes: 6,
+        kcal: 540,
+        protein: 33,
+        carbs: 61,
+        fat: 18,
+        isUserPost: false
+      },
+      {
+        id: "d5",
+        title: "Tacos Birria Croustillants & Consommé",
+        author: "@mateo_lyon",
+        zone: "Lyon • Presqu'île",
+        distance: "300m",
+        postedAgo: "Il y a 19 min",
+        category: "Restaurant",
+        restaurantName: "Casa Fuego Lyon",
+        description: "Tortillas de maïs toastées au fromage fondu, bœuf effiloché épicé et bouillon à tremper.",
+        image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=900&q=80",
+        score: 1290,
+        likes: 51,
+        passes: 3,
+        kcal: 760,
+        protein: 44,
+        carbs: 59,
+        fat: 38,
+        isUserPost: false
+      },
+      {
+        id: "d6",
+        title: "Bouillabaisse Express & Rouille Maison",
+        author: "@nina_mars",
+        zone: "Marseille • Vieux-Port",
+        distance: "350m",
+        postedAgo: "Il y a 22 min",
+        category: "Fait maison",
+        restaurantName: "",
+        description: "Poissons de roche frais du matin, safran pur, croûtons aillés et rouille montée au mortier.",
+        image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=900&q=80",
+        score: 1274,
+        likes: 44,
+        passes: 4,
+        kcal: 590,
+        protein: 42,
+        carbs: 41,
+        fat: 26,
+        isUserPost: false
+      },
+      {
+        id: "d7",
+        title: "Tartelette Citron Yuzu & Meringue Brûlée",
+        author: "@lucas_patiss",
+        zone: "Bordeaux • Centre",
+        distance: "200m",
+        postedAgo: "Il y a 15 min",
+        category: "Concept",
+        restaurantName: "Maison Yuzu",
+        description: "Pâte sucrée au charbon végétal, crémeux citron-yuzu acidulé et meringue italienne.",
+        image: "https://images.unsplash.com/photo-1519915028121-7d3463d20b13?auto=format&fit=crop&w=900&q=80",
+        score: 1278,
+        likes: 45,
+        passes: 4,
+        kcal: 420,
+        protein: 6,
+        carbs: 54,
+        fat: 20,
+        isUserPost: false
+      },
+      {
+        id: "d8",
+        title: "Entrecôte Grillée & Frites Double Cuisson",
+        author: "@hugo_bdx",
+        zone: "Bordeaux • Centre",
+        distance: "550m",
+        postedAgo: "Il y a 33 min",
+        category: "Restaurant",
+        restaurantName: "Le Comptoir Bordelais",
+        description: "Pièce maturée 28 jours, beurre maître d'hôtel et frites croustillantes coupées au couteau.",
+        image: "https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=900&q=80",
+        score: 1260,
+        likes: 41,
+        passes: 6,
+        kcal: 890,
+        protein: 52,
+        carbs: 64,
+        fat: 47,
+        isUserPost: false
+      }
+    ];
+
+    const REWARDS_CATALOG = [
+      {
+        id: "r1",
+        cost: 150,
+        title: "-20% sur l'addition chez Smash & Co",
+        partner: "Smash & Co • Valable midi & soir",
+        code: "SHOWFOOD20",
+        emoji: "🍔"
+      },
+      {
+        id: "r2",
+        cost: 200,
+        title: "1 Café de spécialité + Cookie offert",
+        partner: "Torréfaction & Co • Sans minimum",
+        code: "COOKIEVIP",
+        emoji: "🍪"
+      },
+      {
+        id: "r3",
+        cost: 350,
+        title: "Menu Ramen Complet Offert (19€)",
+        partner: "Ramen Bar • Top Foodie Local",
+        code: "RAMENKING",
+        emoji: "🍜"
+      }
+    ];
+
+    const serviceSlots = [
+      "Battle du Soir • En direct",
+      "Battle du Midi • 12h-14h",
+      "Goûter & Street-Food • 15h-18h"
+    ];
+
+    let appState = {
+      userPoints: 140,
+      selectedZone: "Paris 11e • Bastille",
+      swipedIds: [],
+      unlockedRewards: [],
+      dishes: JSON.parse(JSON.stringify(DEFAULT_DISHES)),
+      bannerDismissed: false
+    };
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          appState = {
+            ...appState,
+            ...parsed,
+            dishes: Array.isArray(parsed.dishes) && parsed.dishes.length > 0 ? parsed.dishes : JSON.parse(JSON.stringify(DEFAULT_DISHES)),
+            swipedIds: Array.isArray(parsed.swipedIds) ? parsed.swipedIds : [],
+            unlockedRewards: Array.isArray(parsed.unlockedRewards) ? parsed.unlockedRewards : []
+          };
+        }
+      } catch (e) {
+        // Fallback to default state if storage unavailable
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        // Ignore quota errors if very large base64 photo is used
+      }
+    }
+
+    let currentSlotIndex = 0;
+    let swipeCategoryFilter = "ALL";
+    let leaderboardCategoryFilter = "ALL";
+
+    // ==================== 3. UI HELPERS ====================
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      const styles = {
+        success: "bg-emerald-600 text-white border border-emerald-400/40",
+        super: "bg-gradient-to-r from-amber-500 to-orange-600 text-white border border-amber-300/40",
+        pass: "bg-slate-800 text-slate-200 border border-slate-700",
+        error: "bg-rose-600 text-white border border-rose-400/40",
+        info: "bg-slate-900 text-white border border-slate-700"
+      };
+      toast.className = `${styles[type] || styles.info} px-4 py-2 rounded-full text-xs font-extrabold shadow-xl animate-pop text-center`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-8px)";
+        toast.style.transition = "all 0.25s ease";
+        setTimeout(() => toast.remove(), 250);
+      }, 2100);
+    }
+
+    function updateHeaderAndWalletUI() {
+      document.getElementById("user-points").textContent = appState.userPoints;
+      document.getElementById("zone-selector").value = appState.selectedZone;
+      document.getElementById("rewards-zone-tag").textContent = appState.selectedZone === "ALL" ? "Toute la France" : appState.selectedZone;
+
+      const bigPts = document.getElementById("rewards-points-big");
+      if (bigPts) bigPts.textContent = appState.userPoints;
+
+      const progLabel = document.getElementById("points-progress-label");
+      const progBar = document.getElementById("points-progress-bar");
+      if (progLabel && progBar) {
+        progLabel.textContent = `${appState.userPoints} / 200 pts`;
+        progBar.style.width = `${Math.min(100, (appState.userPoints / 200) * 100)}%`;
+      }
+
+      if (appState.bannerDismissed) {
+        document.getElementById("install-banner").classList.add("hidden");
+      }
+    }
+
+    function getCategoryBadgeHTML(dish) {
+      if (dish.category === "Fait maison") {
+        return `<span class="inline-flex items-center gap-1 bg-emerald-500/95 text-white text-[11px] font-extrabold px-2.5 py-1 rounded-full shadow-sm">🏠 Fait maison</span>`;
+      }
+      if (dish.category === "Restaurant") {
+        const restoLabel = dish.restaurantName ? ` • ${dish.restaurantName}` : "";
+        return `<span class="inline-flex items-center gap-1 bg-orange-500/95 text-white text-[11px] font-extrabold px-2.5 py-1 rounded-full shadow-sm max-w-[220px] truncate">🍽️ Resto${restoLabel}</span>`;
+      }
+      return `<span class="inline-flex items-center gap-1 bg-purple-600/95 text-white text-[11px] font-extrabold px-2.5 py-1 rounded-full shadow-sm">✨ Concept</span>`;
+    }
+
+    function getApprovalRate(dish) {
+      const total = dish.likes + dish.passes;
+      return total === 0 ? 100 : Math.round((dish.likes / total) * 100);
+    }
+
+    // ==================== 4. DECK SWIPE LOGIC ====================
+    function getFilteredSwipeDishes() {
+      const swipedSet = new Set(appState.swipedIds);
+      return appState.dishes.filter(d => {
+        if (swipedSet.has(d.id)) return false;
+        const zoneMatch = appState.selectedZone === "ALL" || d.zone === appState.selectedZone;
+        const catMatch = swipeCategoryFilter === "ALL" || d.category === swipeCategoryFilter;
+        return zoneMatch && catMatch;
+      });
+    }
+
+    function renderSwipeDeck() {
+      const wrapper = document.getElementById("card-stack-wrapper");
+      const controls = document.getElementById("swipe-controls");
+      const deckCounter = document.getElementById("deck-counter");
+      const available = getFilteredSwipeDishes();
+
+      deckCounter.textContent = `${available.length} plat${available.length > 1 ? "s" : ""}`;
+      wrapper.innerHTML = "";
+
+      if (available.length === 0) {
+        controls.classList.add("opacity-40", "pointer-events-none");
+        wrapper.innerHTML = `
+          <div class="w-full h-full bg-[#171a21] border border-[#282e3a] rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-lg animate-pop">
+            <div class="w-16 h-16 rounded-3xl bg-orange-500/15 border border-orange-500/30 text-3xl flex items-center justify-center mb-3">🍽️</div>
+            <h3 class="text-base font-black text-white">Tu as voté sur tous les plats !</h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-[250px]">
+              Tes votes ont mis à jour le Top Tiers du jour. Poste ton plat ou rejoue le deck !
+            </p>
+            <div class="mt-4 flex flex-col w-full gap-2">
+              <button id="empty-go-post" class="w-full py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-black shadow-md shadow-orange-500/25">
+                ➕ Poster mon plat maintenant
+              </button>
+              <button id="empty-reset-deck" class="w-full py-2.5 rounded-2xl bg-[#0f1115] border border-[#2b313e] hover:border-orange-500/40 text-slate-200 text-xs font-bold transition">
+                🔄 Rejouer les cartes
+              </button>
+            </div>
+          </div>
+        `;
+        document.getElementById("empty-go-post")?.addEventListener("click", () => switchTab("post"));
+        document.getElementById("empty-reset-deck")?.addEventListener("click", () => {
+          appState.swipedIds = [];
+          saveState();
+          renderSwipeDeck();
+          showToast("Deck rechargé !", "info");
+        });
+        return;
+      }
+
+      controls.classList.remove("opacity-40", "pointer-events-none");
+
+      const visibleCards = available.slice(0, 3).reverse();
+      visibleCards.forEach((dish, idx) => {
+        const isTop = idx === visibleCards.length - 1;
+        const stackOffset = visibleCards.length - 1 - idx;
+        const approval = getApprovalRate(dish);
+
+        const card = document.createElement("div");
+        card.dataset.id = dish.id;
+        card.className = `swipe-card absolute inset-0 rounded-[28px] overflow-hidden bg-[#171a21] shadow-2xl border border-white/10 ${isTop ? "cursor-grab z-20" : "pointer-events-none z-10"}`;
+        card.style.transform = `scale(${1 - stackOffset * 0.04}) translateY(${stackOffset * 10}px)`;
+        card.style.opacity = stackOffset === 2 ? "0.6" : "1";
+
+        card.innerHTML = `
+          <img src="${dish.image}" alt="${dish.title}" draggable="false" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x800/171a21/f97316?text=Show+My+Food'" />
+          
+          <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/25 pointer-events-none"></div>
+
+          <!-- Top Badges -->
+          <div class="absolute top-3.5 left-3.5 right-3.5 flex items-start justify-between gap-2 pointer-events-none">
+            ${getCategoryBadgeHTML(dish)}
+            <div class="bg-black/65 backdrop-blur-md text-white px-2.5 py-1 rounded-full text-[11px] font-extrabold flex items-center gap-1 border border-white/15 shrink-0">
+              <span>🔥 ${approval}%</span>
+              <span class="text-white/40">•</span>
+              <span class="text-amber-400">${dish.score}</span>
+            </div>
+          </div>
+
+          <!-- Swipe Stamps -->
+          <div class="stamp-like opacity-0 pointer-events-none absolute top-16 left-5 -rotate-12 border-4 border-emerald-400 bg-emerald-500/25 backdrop-blur-xs text-emerald-300 font-black text-2xl px-4 py-1 rounded-2xl tracking-wider shadow-lg">
+            MIAM 🔥
+          </div>
+          <div class="stamp-pass opacity-0 pointer-events-none absolute top-16 right-5 rotate-12 border-4 border-rose-400 bg-rose-500/25 backdrop-blur-xs text-rose-300 font-black text-2xl px-4 py-1 rounded-2xl tracking-wider shadow-lg">
+            NEXT ✕
+          </div>
+
+          <!-- Dish Details Overlay -->
+          <div class="absolute bottom-0 left-0 right-0 p-4 text-white pointer-events-none">
+            <div class="flex items-center gap-1.5 text-[11px] font-bold text-orange-400 mb-1">
+              <span>${dish.author}</span>
+              <span>•</span>
+              <span>${dish.postedAgo}</span>
+              <span>•</span>
+              <span>${dish.distance}</span>
+            </div>
+            <h3 class="text-xl font-black leading-tight tracking-tight">${dish.title}</h3>
+            <p class="text-xs text-slate-200/90 mt-1 line-clamp-2 leading-relaxed">${dish.description}</p>
+
+            <div class="mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between text-[11px]">
+              <span class="text-slate-300 font-medium">📍 ${dish.zone}</span>
+              <span class="bg-white/15 backdrop-blur-xs px-2.5 py-0.5 rounded-full font-bold text-amber-200">
+                ✨ ~${dish.kcal} kcal • ${dish.protein}g prot
+              </span>
+            </div>
+          </div>
+        `;
+
+        if (isTop) {
+          attachDragHandlers(card, dish);
+        }
+        wrapper.appendChild(card);
+      });
+    }
+
+    function attachDragHandlers(card, dish) {
+      let startX = 0;
+      let startY = 0;
+      let currentX = 0;
+      let isDragging = false;
+
+      const stampLike = card.querySelector(".stamp-like");
+      const stampPass = card.querySelector(".stamp-pass");
+
+      const onPointerDown = (e) => {
+        isDragging = true;
+        startX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
+        startY = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY;
+        card.classList.add("card-dragging");
+        card.classList.remove("card-spring");
+      };
+
+      const onPointerMove = (e) => {
+        if (!isDragging) return;
+        const x = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
+        const y = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY;
+        currentX = x - startX;
+        const currentY = (y - startY) * 0.25;
+        const rotate = currentX * 0.06;
+
+        card.style.transform = `translate(${currentX}px, ${currentY}px) rotate(${rotate}deg)`;
+
+        const progress = Math.min(1, Math.abs(currentX) / 95);
+        if (currentX > 15) {
+          stampLike.style.opacity = progress;
+          stampPass.style.opacity = 0;
+        } else if (currentX < -15) {
+          stampPass.style.opacity = progress;
+          stampLike.style.opacity = 0;
+        } else {
+          stampLike.style.opacity = 0;
+          stampPass.style.opacity = 0;
+        }
+      };
+
+      const onPointerUp = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        card.classList.remove("card-dragging");
+        card.classList.add("card-spring");
+
+        const threshold = 90;
+        if (currentX > threshold) {
+          completeVote(dish, "like", card);
+        } else if (currentX < -threshold) {
+          completeVote(dish, "pass", card);
+        } else {
+          card.style.transform = "translate(0px, 0px) rotate(0deg)";
+          stampLike.style.opacity = 0;
+          stampPass.style.opacity = 0;
+        }
+        currentX = 0;
+      };
+
+      card.addEventListener("mousedown", onPointerDown);
+      window.addEventListener("mousemove", onPointerMove);
+      window.addEventListener("mouseup", onPointerUp);
+
+      card.addEventListener("touchstart", onPointerDown, { passive: true });
+      card.addEventListener("touchmove", onPointerMove, { passive: true });
+      card.addEventListener("touchend", onPointerUp);
+    }
+
+    function completeVote(dish, action, cardEl = null) {
+      if (!dish || appState.swipedIds.includes(dish.id)) return;
+      appState.swipedIds.push(dish.id);
+
+      const topCard = cardEl || document.querySelector(".swipe-card.z-20");
+      if (topCard) {
+        topCard.classList.add("card-spring");
+        const stampLike = topCard.querySelector(".stamp-like");
+        const stampPass = topCard.querySelector(".stamp-pass");
+
+        if (action === "pass") {
+          if (stampPass) stampPass.style.opacity = 1;
+          topCard.style.transform = "translate(-420px, 40px) rotate(-22deg)";
+          topCard.style.opacity = "0";
+        } else {
+          if (stampLike) stampLike.style.opacity = 1;
+          topCard.style.transform = "translate(420px, 40px) rotate(22deg)";
+          topCard.style.opacity = "0";
+        }
+      }
+
+      if (action === "like") {
+        dish.likes += 1;
+        dish.score += 12;
+        appState.userPoints += 1;
+        showToast(`🔥 MIAM ! +1 pt pour toi • ${dish.author} grimpe !`, "success");
+      } else if (action === "super") {
+        dish.likes += 3;
+        dish.score += 32;
+        appState.userPoints += 3;
+        showToast(`⭐ SUPER-CHEF ! +3 pts pour toi • +32 au plat !`, "super");
+      } else {
+        dish.passes += 1;
+        dish.score = Math.max(1000, dish.score - 4);
+      }
+
+      saveState();
+      updateHeaderAndWalletUI();
+
+      setTimeout(() => {
+        renderSwipeDeck();
+        renderLeaderboard();
+      }, 240);
+    }
+
+    // ==================== 5. LEADERBOARD (TOP TIERS) LOGIC ====================
+    function renderLeaderboard() {
+      const podiumEl = document.getElementById("podium-container");
+      const listEl = document.getElementById("ranking-list");
+      const subtitleEl = document.getElementById("leaderboard-subtitle");
+
+      subtitleEl.textContent = `Classement en direct • ${appState.selectedZone === "ALL" ? "Toute la France" : appState.selectedZone}`;
+
+      const filtered = appState.dishes
+        .filter(d => {
+          const zMatch = appState.selectedZone === "ALL" || d.zone === appState.selectedZone;
+          const cMatch = leaderboardCategoryFilter === "ALL" || d.category === leaderboardCategoryFilter;
+          return zMatch && cMatch;
+        })
+        .sort((a, b) => b.score - a.score);
+
+      if (filtered.length === 0) {
+        podiumEl.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">Aucun plat dans cette catégorie pour le moment.</p>`;
+        listEl.innerHTML = "";
+        return;
+      }
+
+      const [first, second, third] = [filtered[0], filtered[1], filtered[2]];
+
+      const renderPodiumSpot = (dish, rank) => {
+        if (!dish) return `<div class="flex-1"></div>`;
+        const config = {
+          1: { medal: "👑", ring: "ring-amber-400", height: "h-24", imgSize: "w-16 h-16" },
+          2: { medal: "🥈", ring: "ring-slate-400", height: "h-16", imgSize: "w-13 h-13" },
+          3: { medal: "🥉", ring: "ring-orange-500", height: "h-12", imgSize: "w-12 h-12" }
+        }[rank];
+
+        return `
+          <div class="flex-1 flex flex-col items-center text-center min-w-0">
+            <div class="relative mb-1.5">
+              <img src="${dish.image}" alt="${dish.title}" class="${config.imgSize} rounded-2xl object-cover ring-3 ${config.ring} shadow-md" />
+              <span class="absolute -top-2.5 -right-2 text-base drop-shadow-xs">${config.medal}</span>
+            </div>
+            <p class="text-[11px] font-black text-white truncate w-full px-1">${dish.title}</p>
+            <span class="text-[10px] font-semibold text-slate-400 truncate w-full">${dish.author}</span>
+            <div class="mt-1.5 w-full ${config.height} rounded-t-2xl ${rank === 1 ? 'bg-gradient-to-t from-amber-500/25 to-orange-500/15 border-t-2 border-amber-400' : 'bg-[#0f1115] border-t border-[#282e3a]'} flex flex-col items-center justify-center px-1">
+              <span class="text-xs font-black text-white">${dish.score}</span>
+              <span class="text-[9px] font-bold text-emerald-400">${getApprovalRate(dish)}% 🔥</span>
+            </div>
+          </div>
+        `;
+      };
+
+      podiumEl.innerHTML = `
+        <div class="flex items-end justify-between gap-2 pt-2">
+          ${renderPodiumSpot(second, 2)}
+          ${renderPodiumSpot(first, 1)}
+          ${renderPodiumSpot(third, 3)}
+        </div>
+        ${first ? `
+          <div class="mt-2.5 pt-2 border-t border-orange-500/20 flex items-center justify-between text-[11px]">
+            <span class="font-bold text-amber-300">🎁 En tête pour le gain du jour :</span>
+            <span class="font-black text-white truncate max-w-[160px]">${first.author}</span>
+          </div>
+        ` : ""}
+      `;
+
+      const rest = filtered.slice(3);
+      if (rest.length === 0) {
+        listEl.innerHTML = `<p class="text-center text-[11px] text-slate-500 py-3">Poste ton plat pour challenger le podium !</p>`;
+      } else {
+        listEl.innerHTML = rest.map((dish, i) => {
+          const rank = i + 4;
+          const approval = getApprovalRate(dish);
+          return `
+            <div class="bg-[#171a21] border border-[#252a34] rounded-2xl p-2.5 flex items-center gap-3 ${dish.isUserPost ? 'ring-2 ring-orange-500 bg-orange-950/20' : ''}">
+              <span class="w-6 text-center text-xs font-black text-slate-500">#${rank}</span>
+              <img src="${dish.image}" alt="${dish.title}" class="w-13 h-13 rounded-xl object-cover shrink-0" />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                    dish.category === 'Fait maison' ? 'bg-emerald-500/15 text-emerald-400' :
+                    dish.category === 'Restaurant' ? 'bg-orange-500/15 text-orange-400' : 'bg-purple-500/15 text-purple-400'
+                  }">${dish.category}</span>
+                  <span class="text-[10px] text-slate-500 font-medium">${dish.postedAgo}</span>
+                </div>
+                <h4 class="text-xs font-extrabold text-white truncate mt-0.5">${dish.title}</h4>
+                <p class="text-[11px] text-slate-400 truncate">${dish.author} • ${dish.zone}</p>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-xs font-black text-white">${dish.score} pts</div>
+                <div class="text-[10px] font-bold text-emerald-400">${approval}% 🔥</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    // ==================== 6. POST DISH & AI SCAN SIMULATION ====================
+    let currentPostImage = "";
+    let currentAiMacros = { kcal: 620, p: 32, g: 58, l: 24 };
+
+    function setPostPreview(url) {
+      currentPostImage = url;
+      document.getElementById("post-preview-empty").classList.add("hidden");
+      document.getElementById("post-preview-filled").classList.remove("hidden");
+      document.getElementById("post-preview-img").src = url;
+    }
+
+    function clearPostPreview() {
+      currentPostImage = "";
+      document.getElementById("post-preview-empty").classList.remove("hidden");
+      document.getElementById("post-preview-filled").classList.add("hidden");
+      document.getElementById("post-preview-img").src = "";
+      document.getElementById("ai-nutrition-box").classList.add("hidden");
+    }
+
+    // Compress uploaded image slightly via canvas so localStorage persistence stays super fast
+    document.getElementById("photo-input").addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 720;
+          const scale = Math.min(1, maxW / img.width);
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.78);
+          setPostPreview(compressedDataUrl);
+          showToast("Photo chargée ! Lance l'analyse IA ✨", "info");
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("clear-photo-btn").addEventListener("click", clearPostPreview);
+
+    document.querySelectorAll(".sample-dish-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        setPostPreview(btn.dataset.url);
+        document.getElementById("dish-title").value = btn.dataset.title;
+        document.getElementById("dish-category").value = btn.dataset.cat;
+        document.getElementById("dish-resto").value = btn.dataset.resto;
+        document.getElementById("dish-desc").value = btn.dataset.desc;
+        toggleRestoField();
+
+        currentAiMacros = {
+          kcal: parseInt(btn.dataset.kcal, 10),
+          p: parseInt(btn.dataset.p, 10),
+          g: parseInt(btn.dataset.g, 10),
+          l: parseInt(btn.dataset.l, 10)
+        };
+        updateAiMacroBox();
+        showToast("Plat d'exemple chargé + analysé par l'IA !", "success");
+      });
+    });
+
+    function toggleRestoField() {
+      const cat = document.getElementById("dish-category").value;
+      const wrapper = document.getElementById("resto-name-wrapper");
+      if (cat === "Restaurant") {
+        wrapper.classList.remove("hidden");
+      } else {
+        wrapper.classList.add("hidden");
+      }
+    }
+    document.getElementById("dish-category").addEventListener("change", toggleRestoField);
+
+    function updateAiMacroBox() {
+      document.getElementById("ai-kcal-badge").textContent = `${currentAiMacros.kcal} kcal`;
+      document.getElementById("ai-prot").textContent = `${currentAiMacros.p}g`;
+      document.getElementById("ai-carbs").textContent = `${currentAiMacros.g}g`;
+      document.getElementById("ai-fats").textContent = `${currentAiMacros.l}g`;
+      document.getElementById("ai-nutrition-box").classList.remove("hidden");
+    }
+
+    document.getElementById("ai-analyze-btn").addEventListener("click", async () => {
+      if (!currentPostImage) {
+        showToast("Ajoute d'abord une photo ou choisis un exemple !", "error");
+        return;
+      }
+
+      const btn = document.getElementById("ai-analyze-btn");
+      const btnText = document.getElementById("ai-btn-text");
+      const btnIcon = document.getElementById("ai-btn-icon");
+      const scanOverlay = document.getElementById("ai-scan-overlay");
+
+      btn.disabled = true;
+      btnIcon.textContent = "⏳";
+      btnText.textContent = "Analyse IA en cours...";
+      scanOverlay.classList.remove("hidden");
+
+      await new Promise(r => setTimeout(r, 1100));
+
+      if (!document.getElementById("dish-title").value.trim()) {
+        const aiPresets = [
+          { title: "Assiette Gourmande Équilibrée", cat: "Fait maison", desc: "Préparation maison fraîche avec protéines grillées et légumes croquants.", kcal: 560, p: 36, g: 48, l: 21 },
+          { title: "Création Signature du Chef", cat: "Restaurant", desc: "Dressage soigné, textures croustillantes et sauce maison parfumée.", kcal: 710, p: 34, g: 62, l: 33 },
+          { title: "Recette Fusion Street-Food", cat: "Concept", desc: "Association originale pensée pour le battle culinaire du jour.", kcal: 640, p: 28, g: 66, l: 27 }
+        ];
+        const pick = aiPresets[Math.floor(Math.random() * aiPresets.length)];
+        document.getElementById("dish-title").value = pick.title;
+        document.getElementById("dish-category").value = pick.cat;
+        document.getElementById("dish-desc").value = pick.desc;
+        toggleRestoField();
+        currentAiMacros = { kcal: pick.kcal, p: pick.p, g: pick.g, l: pick.l };
+      }
+
+      scanOverlay.classList.add("hidden");
+      updateAiMacroBox();
+      btn.disabled = false;
+      btnIcon.textContent = "✨";
+      btnText.textContent = "Analyser mon plat avec l'IA (Titre + Macros)";
+      showToast("✨ Plat détecté & macros estimées !", "success");
+    });
+
+    document.getElementById("publish-dish-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title = document.getElementById("dish-title").value.trim();
+      const category = document.getElementById("dish-category").value;
+      const zone = document.getElementById("dish-zone").value;
+      const restaurantName = document.getElementById("dish-resto").value.trim();
+      const description = document.getElementById("dish-desc").value.trim() || "Tout juste publié dans le battle du jour !";
+
+      if (!title) {
+        showToast("Indique le nom de ton plat !", "error");
+        return;
+      }
+
+      const imageToUse = currentPostImage || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=80";
+
+      const newDish = {
+        id: "user_" + Date.now(),
+        title,
+        author: "@toi_chef",
+        zone,
+        distance: "Sur place",
+        postedAgo: "À l'instant",
+        category,
+        restaurantName: category === "Restaurant" ? restaurantName : "",
+        description,
+        image: imageToUse,
+        score: 1270,
+        likes: 18,
+        passes: 1,
+        kcal: currentAiMacros.kcal,
+        protein: currentAiMacros.p,
+        carbs: currentAiMacros.g,
+        fat: currentAiMacros.l,
+        isUserPost: true
+      };
+
+      appState.dishes.unshift(newDish);
+      appState.userPoints += 25;
+      appState.selectedZone = zone;
+
+      saveState();
+      updateHeaderAndWalletUI();
+
+      e.target.reset();
+      clearPostPreview();
+      toggleRestoField();
+
+      renderSwipeDeck();
+      renderLeaderboard();
+      switchTab("leaderboard");
+      showToast("🚀 Plat publié ! +25 pts & entrée au Top Tiers !", "super");
+    });
+
+    // ==================== 7. REWARDS SHOP & DEPLOYMENT ====================
+    function renderRewardsShop() {
+      const container = document.getElementById("rewards-shop-list");
+      container.innerHTML = REWARDS_CATALOG.map(item => {
+        const isUnlocked = appState.unlockedRewards.includes(item.id);
+        return `
+          <div class="bg-[#171a21] border ${isUnlocked ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-[#252a34]'} rounded-2xl p-3.5 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-2xl bg-[#0f1115] border border-[#282e3a] text-xl flex items-center justify-center shrink-0">${item.emoji}</div>
+              <div class="min-w-0">
+                <span class="text-[10px] font-extrabold ${isUnlocked ? 'text-emerald-400' : 'text-orange-400'}">${isUnlocked ? '✅ Débloqué' : `${item.cost} pts requis`}</span>
+                <h4 class="text-xs font-extrabold text-white truncate mt-0.5">${item.title}</h4>
+                <p class="text-[11px] text-slate-400 truncate">${item.partner}</p>
+                ${isUnlocked ? `<div class="mt-1 inline-block bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-md">CODE : ${item.code}</div>` : ''}
+              </div>
+            </div>
+            ${isUnlocked ? '' : `
+              <button data-reward-id="${item.id}" class="redeem-btn shrink-0 bg-orange-500 hover:bg-orange-600 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl transition active:scale-95">
+                Débloquer
+              </button>
+            `}
+          </div>
+        `;
+      }).join("");
+
+      document.querySelectorAll(".redeem-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const item = REWARDS_CATALOG.find(r => r.id === btn.dataset.rewardId);
+          if (!item) return;
+          if (appState.userPoints < item.cost) {
+            showToast(`Il te manque ${item.cost - appState.userPoints} pts ! Vote ou poste un plat 🔥`, "error");
+            return;
+          }
+          appState.userPoints -= item.cost;
+          appState.unlockedRewards.push(item.id);
+          saveState();
+          updateHeaderAndWalletUI();
+          renderRewardsShop();
+          showToast(`🎉 Récompense débloquée ! Code : ${item.code}`, "success");
+        });
+      });
+    }
+
+    function downloadStandaloneHTML() {
+      try {
+        const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+        const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "index.html";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast("⬇️ Fichier index.html téléchargé !", "success");
+      } catch (e) {
+        showToast("Impossible de lancer le téléchargement ici.", "error");
+      }
+    }
+
+    // ==================== 8. NAVIGATION, MODALS & EVENT LISTENERS ====================
+    function switchTab(tabName) {
+      ["swipe", "leaderboard", "post", "rewards"].forEach(t => {
+        const section = document.getElementById(`tab-${t}`);
+        if (t === tabName) {
+          section.classList.remove("hidden");
+        } else {
+          section.classList.add("hidden");
+        }
+      });
+
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+          btn.classList.add("active", "text-orange-400", "bg-orange-500/15", "font-extrabold");
+          btn.classList.remove("text-slate-400", "font-bold");
+        } else {
+          btn.classList.remove("active", "text-orange-400", "bg-orange-500/15", "font-extrabold");
+          btn.classList.add("text-slate-400", "font-bold");
+        }
+      });
+    }
+
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+
+    // Install Modal & Prompt Handlers
+    function openInstallModal() {
+      if (deferredInstallPrompt) {
+        document.getElementById("native-install-box").classList.remove("hidden");
+      }
+      document.getElementById("install-modal").classList.remove("hidden");
+    }
+
+    function closeInstallModal() {
+      document.getElementById("install-modal").classList.add("hidden");
+    }
+
+    document.getElementById("header-install-btn").addEventListener("click", openInstallModal);
+    document.getElementById("banner-install-btn").addEventListener("click", openInstallModal);
+    document.getElementById("open-install-modal-secondary").addEventListener("click", openInstallModal);
+    document.getElementById("close-install-modal").addEventListener("click", closeInstallModal);
+
+    document.getElementById("install-modal").addEventListener("click", (e) => {
+      if (e.target.id === "install-modal") closeInstallModal();
+    });
+
+    document.getElementById("trigger-native-install").addEventListener("click", async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === "accepted") {
+        showToast("🎉 Show My Food installé sur ton écran !", "success");
+        closeInstallModal();
+      }
+      deferredInstallPrompt = null;
+    });
+
+    document.getElementById("close-banner-btn").addEventListener("click", () => {
+      appState.bannerDismissed = true;
+      saveState();
+      document.getElementById("install-banner").classList.add("hidden");
+    });
+
+    document.getElementById("download-html-btn").addEventListener("click", downloadStandaloneHTML);
+    document.getElementById("modal-download-html").addEventListener("click", downloadStandaloneHTML);
+
+    // Zone Selector
+    document.getElementById("zone-selector").addEventListener("change", (e) => {
+      appState.selectedZone = e.target.value;
+      saveState();
+      updateHeaderAndWalletUI();
+      renderSwipeDeck();
+      renderLeaderboard();
+    });
+
+    // Service Slot Toggle
+    document.getElementById("toggle-slot-btn").addEventListener("click", () => {
+      currentSlotIndex = (currentSlotIndex + 1) % serviceSlots.length;
+      document.getElementById("service-slot-label").textContent = serviceSlots[currentSlotIndex];
+      showToast(`Créneau : ${serviceSlots[currentSlotIndex]}`, "info");
+    });
+
+    // Swipe Category Pills
+    document.querySelectorAll(".swipe-cat-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        swipeCategoryFilter = btn.dataset.swipeCat;
+        document.querySelectorAll(".swipe-cat-btn").forEach(b => {
+          b.className = "swipe-cat-btn px-3 py-1 rounded-full text-xs font-bold bg-[#171a21] text-slate-300 border border-[#282e3a] hover:border-orange-500/40 transition";
+        });
+        btn.className = "swipe-cat-btn active px-3 py-1 rounded-full text-xs font-extrabold bg-orange-500 text-white shadow-xs transition";
+        renderSwipeDeck();
+      });
+    });
+
+    // Leaderboard Category Pills
+    document.querySelectorAll(".lb-cat-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        leaderboardCategoryFilter = btn.dataset.lbCat;
+        document.querySelectorAll(".lb-cat-btn").forEach(b => {
+          b.className = "lb-cat-btn px-3 py-1.5 rounded-full text-xs font-bold bg-[#171a21] text-slate-300 border border-[#282e3a] transition";
+        });
+        btn.className = "lb-cat-btn px-3 py-1.5 rounded-full text-xs font-extrabold bg-orange-500 text-white shadow-xs transition";
+        renderLeaderboard();
+      });
+    });
+
+    // Bottom Swipe Action Buttons
+    document.getElementById("btn-pass").addEventListener("click", () => {
+      const nextDish = getFilteredSwipeDishes()[0];
+      if (nextDish) completeVote(nextDish, "pass");
+    });
+    document.getElementById("btn-like").addEventListener("click", () => {
+      const nextDish = getFilteredSwipeDishes()[0];
+      if (nextDish) completeVote(nextDish, "like");
+    });
+    document.getElementById("btn-super").addEventListener("click", () => {
+      const nextDish = getFilteredSwipeDishes()[0];
+      if (nextDish) completeVote(nextDish, "super");
+    });
+
+    // Demo Reset Button
+    document.getElementById("reset-demo-btn").addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEY);
+      appState = {
+        userPoints: 140,
+        selectedZone: "Paris 11e • Bastille",
+        swipedIds: [],
+        unlockedRewards: [],
+        dishes: JSON.parse(JSON.stringify(DEFAULT_DISHES)),
+        bannerDismissed: false
+      };
+      document.getElementById("install-banner").classList.remove("hidden");
+      updateHeaderAndWalletUI();
+      renderSwipeDeck();
+      renderLeaderboard();
+      renderRewardsShop();
+      showToast("🔄 Démo réinitialisée à zéro !", "info");
+    });
+
+    // ==================== BOOTSTRAP APP ====================
+    loadState();
+    initPWA();
+    updateHeaderAndWalletUI();
+    renderSwipeDeck();
+    renderLeaderboard();
+    renderRewardsShop();
+  </script>
+</body>
+</html>
